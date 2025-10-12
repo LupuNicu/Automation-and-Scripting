@@ -1,0 +1,8 @@
+# Cron job: zilnic la ora 6:00 pentru MDL -> EUR (ziua precedentă)
+0 6 * * * cd /app && /usr/local/bin/python3 currency_exchange_rate.py MDL EUR $(date -d "yesterday" +\%Y-\%m-\%d) >> /var/log/cron.log 2>&1
+
+# Cron job: vinerea la ora 17:00 pentru MDL -> USD (ultima săptămână)
+0 17 * * 5 cd /app && /usr/local/bin/python3 currency_exchange_rate.py MDL USD $(date -d "last friday" +\%Y-\%m-\%d) >> /var/log/cron.log 2>&1
+
+* * * * * cd /app && /usr/local/bin/python3 currency_exchange_rate.py MDL EUR $(date +\%Y-\%m-\%d) >> /var/log/cron.log 2>&1
+

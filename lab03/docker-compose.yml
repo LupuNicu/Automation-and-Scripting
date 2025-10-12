@@ -1,0 +1,10 @@
+services:
+  lab03_cron:
+    build: .
+    container_name: lab03_cron
+    network_mode: "host"
+    volumes:
+      - ./data:/app/data
+    environment:
+      API_KEY: "NICU_LUPU_API_KEY"
+    restart: unless-stopped
