@@ -1,12 +1,12 @@
-# Sarcină Laborator 4: Configurarea Jenkins pentru Automatizarea Sarcinilor DevOps
+# Laborator 4: Configurarea Jenkins pentru Automatizarea Sarcinilor DevOps
 
-## Obiectiv
+## Descrierea Proiectului
 
-Învață cum să configurezi Jenkins pentru automatizarea sarcinilor DevOps, inclusiv crearea și gestionarea pipeline-urilor CI/CD.
+Acest laborator prezintă procesul de configurare a Jenkins pentru automatizarea sarcinilor DevOps, inclusiv crearea și gestionarea pipeline-urilor CI/CD. Proiectul include configurarea unui Jenkins Controller și a unui SSH Agent pentru execuția job-urilor pe un mediu izolat cu suport PHP.
 
-## Pregătire
+---
 
-Creează un folder `lab4` în repository-ul tău GitHub pentru a stoca toate fișierele legate de acest laborator. Ar trebui să ai Docker și Docker Compose instalate pentru a completa sarcina.
+Am creat un folder `lab4` în repository-ul meu GitHub pentru a stoca toate fișierele legate de acest laborator. Am avut Docker și Docker Compose instalate pentru a completa sarcina.
 
 ## Crearea Fișierelor de Configurare
 
@@ -122,7 +122,7 @@ docker-compose up -d jenkins-controller
 ![](images/1.png)
 ![](images/2.png)
 
-Deschide browserul și accesează: `http://localhost:8081`
+Am deschis browserul și am accesat: `http://localhost:8081`
 
 În terminal, rulez pentru a vedea parola in terminal:
 
@@ -135,23 +135,23 @@ Am introdus parola:
 
 ![](images/4.png)
 
-Alegem instalarea la suggested plugin
+Am ales instalarea la suggested plugin
 
 ![](images/5.png)
 
-Asteptam inslarea
+Am așteptat instalarea
 
 ![](images/6.png)
 
-Creem userul de admin
+Am creat userul de admin
 
 ![](images/7.png)
 
-Lasam URL la 8081
+Am lăsat URL la 8081
 
 ![](images/8.png)
 
-În terminal crem folderul pentru cheie
+În terminal am creat folderul pentru cheie
 
 ```bash
 mkdir secrets
@@ -159,16 +159,16 @@ cd secrets
 ```
 ![](images/9.png)
 
-Generam cheia ssh
+Am generat cheia ssh
 
 ```bash
 ssh-keygen -f jenkins_agent_ssh_key
 ```
 ![](images/10.png)
 
-Citim cheia publica
+Am citit cheia publică
 
-Rulează:
+Am rulat:
 
 ```bash
 cat jenkins_agent_ssh_key.pub
@@ -176,7 +176,7 @@ cat jenkins_agent_ssh_key.pub
 
 ![](images/11.png)
 
-Înapoi în directorul rădăcină al proiectului creez un fișier `.env` cu următorul conținut:
+Înapoi în directorul rădăcină al proiectului am creat un fișier `.env` cu următorul conținut:
 
 ```
 JENKINS_AGENT_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID1YJmLWIBVI9fIqRYZb+d8QwtZk5kFhaaUXOPJki5hI nicu@DESKTOP-7EFFO4G
@@ -194,65 +194,65 @@ Conectarea SSH Agent la Jenkins prin interfata grafica
 
 Accesez Jenkins la `http://localhost:8081`
 
-Mergem la Setari Jenkins
+Am mers la Setări Jenkins
 
 ![](images/14.png)
 
-Cautăm "SSH Agents Plugin" în listă pentru a verifica daca e instalat
+Am căutat "SSH Agents Plugin" în listă pentru a verifica dacă e instalat
 ![](images/15.png)
 
-Apoi înregistram cheia SSH în Jenkins
+Apoi am înregistrat cheia SSH în Jenkins
 
-Mergem la **Управление Jenkins** 
-Click pe **Добавить учетные данные**
+Am mers la **Управление Jenkins** 
+Am dat click pe **Добавить учетные данные**
 
 ![](images/16.png)
 
-Completează formularul:
-  - **Тип (Kind):** Selectează **SSH имя пользователя с закрытым ключом** (SSH Username with private key)
-  - **Область действия (Scope):** Lasă **Глобальная** (Global)
+Am completat formularul:
+  - **Тип (Kind):** Am selectat **SSH имя пользователя с закрытым ключом** (SSH Username with private key)
+  - **Область действия (Scope):** Am lăsat **Глобальная** (Global)
   - **Имя пользователя (Username):** `jenkins`
-  - **Закрытый ключ (Private Key):** Selectează **Ввести напрямую** (Enter directly)
-  - **Ключ (Key):** Deschide fișierul `secrets/jenkins_agent_ssh_key` și **copiază întregul conținut** 
+  - **Закрытый ключ (Private Key):** Am selectat **Ввести напрямую** (Enter directly)
+  - **Ключ (Key):** Am deschis fișierul `secrets/jenkins_agent_ssh_key` și **am copiat întregul conținut** 
 
 ![](images/17.png)
 
 ![](images/18.png)
 
-Adăugăm un nou nod Jenkins agent
+Am adăugat un nou nod Jenkins agent
 
-Mergi la Управление Jenkins
-Click pe New Node
+Am mers la Управление Jenkins
+Am dat click pe New Node
 
 ![](images/19.png)
 
-Creez un nod nou
+Am creat un nod nou
 
 ![](images/20.png)
 
 ![](images/21.png)
 
-Folosim un proiect PHP pentru teste de pe git hub
+Am folosit un proiect PHP pentru teste de pe GitHub
 
-Crearez un Pipeline Jenkins
+Am creat un Pipeline Jenkins
 
 ![](images/22.png)
 
-Si il configurez
+Și l-am configurat
 
 ![](images/23.png)
 
-Apoi facem build la pepeline
+Apoi am făcut build la pipeline
 
 ![](images/24.png)
 
-Dupa 2 erori din a 3 incercare vedem ca totul e ok
+După 2 erori, din a 3-a încercare am văzut că totul e ok
 
 ![](images/25.png)
 
 ![](images/26.png)
 
-## Raspuns la interbari
+## Răspunsuri la întrebări
 
 ### 6.5. Răspunsuri la întrebări
 
