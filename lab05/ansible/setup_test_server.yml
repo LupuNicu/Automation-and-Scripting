@@ -1,0 +1,116 @@
+---
+- name: Configure Test Server with Apache and PHP
+  hosts: test_servers
+  become: yes
+  become_user: root
+  
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install Apache2
+      apt:
+        name: apache2
+        state: present
+
+    - name: Install PHP and required extensions
+      apt:
+        name:
+          - php
+          - php-cli
+          - php-common
+          - php-mysql
+          - php-zip
+          - php-gd
+          - php-mbstring
+          - php-curl
+          - php-xml
+          - php-bcmath
+          - libapache2-mod-php
+          - curl
+          - unzip
+        state: present
+
+    - name: Install Composer
+      shell: |
+        curl -sS https://getcomposer.org/installer | php
+        mv composer.phar /usr/local/bin/composer
+        chmod +x /usr/local/bin/composer
+      args:
+        creates: /usr/local/bin/composer
+
+    - name: Enable Apache modules
+      apache2_module:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - rewrite
+        - php8.1
+      ignore_errors: yes
+
+    - name: Create document root directory
+      file:
+        path: /var/www/html
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Configure Apache virtual host
+      copy:
+        content: |
+          <VirtualHost *:80>
+              ServerAdmin webmaster@localhost
+              DocumentRoot /var/www/html
+              
+              <Directory /var/www/html>
+                  Options Indexes FollowSymLinks
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+              
+              ErrorLog ${APACHE_LOG_DIR}/error.log
+              CustomLog ${APACHE_LOG_DIR}/access.log combined
+          </VirtualHost>
+        dest: /etc/apache2/sites-available/000-default.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart apache
+
+    - name: Enable Apache site
+      command: a2ensite 000-default.conf
+      changed_when: false
+
+    - name: Start Apache service
+      shell: service apache2 start
+      changed_when: false
+      ignore_errors: yes
+      
+    - name: Ensure Apache process is running
+      shell: pgrep -f apache2 || (service apache2 start && sleep 2)
+      register: apache_check
+      changed_when: false
+      failed_when: false
+      
+    - name: Verify Apache is running
+      shell: pgrep -f apache2
+      register: apache_running
+      changed_when: false
+      failed_when: apache_running.rc != 0
+
+    - name: Create PHP info file for testing
+      copy:
+        content: "<?php phpinfo(); ?>"
+        dest: /var/www/html/info.php
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+  handlers:
+    - name: restart apache
+      command: service apache2 restart
+      changed_when: false
+

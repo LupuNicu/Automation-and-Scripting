@@ -1,0 +1,80 @@
+services:
+  jenkins-controller:
+    image: jenkins/jenkins:lts
+    container_name: jenkins-controller
+    hostname: jenkins-controller
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    networks:
+      jenkins-network:
+        aliases:
+          - jenkins-controller
+    restart: unless-stopped
+
+  ssh-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.ssh_agent
+    container_name: ssh-agent
+    hostname: ssh-agent
+    environment:
+      - JENKINS_AGENT_SSH_PUBKEY=${JENKINS_AGENT_SSH_PUBKEY}
+    volumes:
+      - jenkins_agent_volume:/home/jenkins/agent
+    depends_on:
+      - jenkins-controller
+    networks:
+      jenkins-network:
+        aliases:
+          - ssh-agent
+    restart: unless-stopped
+
+  ansible-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.ansible_agent
+    container_name: ansible-agent
+    hostname: ansible-agent
+    environment:
+      - JENKINS_AGENT_SSH_PUBKEY=${JENKINS_ANSIBLE_SSH_PUBKEY}
+    volumes:
+      - jenkins_ansible_volume:/home/jenkins-ansible/agent
+      - ./ansible:/home/jenkins-ansible/ansible:ro
+    depends_on:
+      - jenkins-controller
+      - test-server
+    networks:
+      jenkins-network:
+        aliases:
+          - ansible-agent
+    restart: unless-stopped
+
+  test-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.test_server
+    container_name: test-server
+    hostname: test-server
+    ports:
+      - "8082:80"
+      - "2222:22"
+    volumes:
+      - test_server_www:/var/www/html
+    networks:
+      jenkins-network:
+        aliases:
+          - test-server
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
+  jenkins_agent_volume:
+  jenkins_ansible_volume:
+  test_server_www:
+
+networks:
+  jenkins-network:
+    driver: bridge

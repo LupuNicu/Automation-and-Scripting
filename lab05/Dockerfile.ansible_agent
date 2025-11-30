@@ -1,0 +1,71 @@
+FROM ubuntu:latest
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    openssh-server \
+    openssh-client \
+    git \
+    curl \
+    sudo \
+    openjdk-17-jre-headless \
+    rsync \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Ansible
+RUN pip3 install --no-cache-dir --break-system-packages ansible
+
+# Create jenkins-ansible user (nume diferit pentru identificare ușoară în Jenkins)
+RUN useradd -m -s /bin/bash jenkins-ansible
+
+# Create .ssh directory
+RUN mkdir -p /home/jenkins-ansible/.ssh && \
+    chmod 700 /home/jenkins-ansible/.ssh && \
+    chown -R jenkins-ansible:jenkins-ansible /home/jenkins-ansible/.ssh
+
+# Copy SSH public key for Jenkins connection
+COPY secrets/jenkins_ansible_ssh_key.pub /tmp/jenkins_key.pub
+RUN cat /tmp/jenkins_key.pub > /home/jenkins-ansible/.ssh/authorized_keys && \
+    chmod 600 /home/jenkins-ansible/.ssh/authorized_keys && \
+    chown jenkins-ansible:jenkins-ansible /home/jenkins-ansible/.ssh/authorized_keys && \
+    rm /tmp/jenkins_key.pub
+
+# Create ansible directory
+RUN mkdir -p /home/jenkins-ansible/ansible && \
+    chown -R jenkins-ansible:jenkins-ansible /home/jenkins-ansible/ansible
+
+# Copy SSH keys for connecting to test server
+COPY secrets/ansible_test_server_key /home/jenkins-ansible/.ssh/id_rsa
+COPY secrets/ansible_test_server_key.pub /home/jenkins-ansible/.ssh/id_rsa.pub
+RUN chmod 600 /home/jenkins-ansible/.ssh/id_rsa && \
+    chmod 644 /home/jenkins-ansible/.ssh/id_rsa.pub && \
+    chown jenkins-ansible:jenkins-ansible /home/jenkins-ansible/.ssh/id_rsa /home/jenkins-ansible/.ssh/id_rsa.pub
+
+# Configure SSH server (must be done as root)
+RUN mkdir /var/run/sshd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
+    echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
+
+# Expose SSH port
+EXPOSE 22
+
+# Create and set working directory with correct permissions
+RUN mkdir -p /home/jenkins-ansible/agent && \
+    chmod 755 /home/jenkins-ansible/agent && \
+    chown jenkins-ansible:jenkins-ansible /home/jenkins-ansible/agent
+
+WORKDIR /home/jenkins-ansible/agent
+
+# Verify Ansible installation (as jenkins-ansible user)
+USER jenkins-ansible
+RUN ansible --version
+
+# Switch back to root for SSH service
+USER root
+
+# Start SSH service and keep container running
+CMD ["sh", "-c", "/usr/sbin/sshd -D & sleep infinity"]
+

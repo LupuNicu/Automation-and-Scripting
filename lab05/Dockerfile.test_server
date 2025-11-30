@@ -1,0 +1,38 @@
+FROM ubuntu:latest
+
+# Install openssh-server, sudo, and rsync
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    sudo \
+    rsync \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create ansible user
+RUN useradd -m -s /bin/bash ansible && \
+    echo "ansible ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Create .ssh directory for ansible user
+RUN mkdir -p /home/ansible/.ssh && \
+    chmod 700 /home/ansible/.ssh && \
+    chown -R ansible:ansible /home/ansible/.ssh
+
+# Copy SSH public key from secrets directory
+COPY secrets/ansible_test_server_key.pub /tmp/ansible_key.pub
+RUN cat /tmp/ansible_key.pub >> /home/ansible/.ssh/authorized_keys && \
+    chmod 600 /home/ansible/.ssh/authorized_keys && \
+    chown ansible:ansible /home/ansible/.ssh/authorized_keys && \
+    rm /tmp/ansible_key.pub
+
+# Configure SSH
+RUN mkdir /var/run/sshd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
+    echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
+
+# Expose SSH port
+EXPOSE 22
+
+# Start SSH service
+CMD ["/usr/sbin/sshd", "-D"]
+
