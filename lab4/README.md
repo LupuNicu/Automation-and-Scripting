@@ -1,0 +1,1 @@
+docker run -p 8081:8080 -p 50000:50000 --restart=on-failure jenkins/jenkins:lts-jdk21
