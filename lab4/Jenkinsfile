@@ -1,0 +1,33 @@
+pipeline {
+    agent {
+        label 'php-agent'
+    }
+    
+    stages {        
+        stage('Install Dependencies') {
+            steps {
+                echo 'Instalare dependențe...'
+                sh 'composer install --no-interaction --prefer-dist'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'Rulare teste unitare...'
+                sh 'vendor/bin/phpunit tests/ --testdox'
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline finalizat.'
+        }
+        success {
+            echo 'Toate etapele au fost finalizate cu succes!'
+        }
+        failure {
+            echo 'Erori detectate în pipeline.'
+        }
+    }
+}
