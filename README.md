@@ -1,0 +1,1 @@
+# Lista laburilor la Automation and Scripting 
